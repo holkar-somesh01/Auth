@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { showToast, handleApiError } from '@/lib/toast-utils';
 
 export default function ForgotPasswordPage() {
     const router = useRouter();
@@ -10,33 +12,18 @@ export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
     const [otp, setOtp] = useState('');
     const [newPassword, setNewPassword] = useState('');
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleSendOtp = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
-        setSuccess('');
         setLoading(true);
 
         try {
-            const res = await fetch('/api/auth/forgot-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.message || 'Failed to send OTP');
-            }
-
-            setSuccess(data.message);
+            const data = await api.post<{ message: string }>('/api/auth/forgot-password', { email });
+            showToast.success(data.message || 'OTP sent to your email!');
             setStep(2);
         } catch (err: any) {
-            setError(err.message || 'An error occurred');
+            handleApiError(err);
         } finally {
             setLoading(false);
         }
@@ -44,27 +31,14 @@ export default function ForgotPasswordPage() {
 
     const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
-        setSuccess('');
         setLoading(true);
 
         try {
-            const res = await fetch('/api/auth/reset-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, otp, newPassword }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.message || 'Failed to reset password');
-            }
-
-            alert(data.message);
+            const data = await api.post<{ message: string }>('/api/auth/reset-password', { email, otp, newPassword });
+            showToast.success(data.message || 'Password reset successful!');
             router.push('/login');
         } catch (err: any) {
-            setError(err.message || 'An error occurred');
+            handleApiError(err);
         } finally {
             setLoading(false);
         }
@@ -104,8 +78,7 @@ export default function ForgotPasswordPage() {
                             />
                         </div>
 
-                        {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-                        {success && <div className="text-green-500 text-sm text-center">{success}</div>}
+                        {/* Error and Success are now shown via Toasts */}
 
                         <button
                             type="submit"
@@ -155,8 +128,7 @@ export default function ForgotPasswordPage() {
                             </div>
                         </div>
 
-                        {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-                        {success && <div className="text-green-500 text-sm text-center">{success}</div>}
+                        {/* Error and Success are now shown via Toasts */}
 
                         <button
                             type="submit"

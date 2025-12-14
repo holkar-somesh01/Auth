@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const db = require('./models');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const globalErrorHandler = require('./middlewares/errorMiddleware');
+const AppError = require('./utils/AppError');
 
 const app = express();
 const cookieParser = require('cookie-parser');
@@ -21,12 +23,26 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/test', userRoutes);
 
+// Handle undefined routes
+// Handle undefined routes
+app.all(/(.*)/, (req, res, next) => {
+    next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
+// Global Error Handler
+app.use(globalErrorHandler);
+
+// Export app for Vercel
+module.exports = app;
+
 // Sync Database and Start Server
 // In production, you might not want to sync automatically.
 const PORT = process.env.PORT || 3000;
 
-db.syncDatabase().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}.`);
+if (require.main === module) {
+    db.syncDatabase().then(() => {
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}.`);
+        });
     });
-});
+}

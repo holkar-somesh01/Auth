@@ -7,7 +7,9 @@ User.belongsTo(Role, { foreignKey: 'roleId' });
 
 const syncDatabase = async () => {
     try {
-        await sequelize.sync({ alter: true });
+        // force: true will drop the table if it already exists
+        // alter: true will try to update the table if it already exists (can cause errors with FKs)
+        await sequelize.sync();
         console.log('Database & tables synced!');
 
         const roles = await Role.findAll();
